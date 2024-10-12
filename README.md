@@ -28,7 +28,8 @@ Play a game
   [-width INT]               . width of board (default: 7)
   [-help], -?                . print this help text and exit
 ```
-
+### Demo
+![v0.2.1-alpha demo](https://github.com/kiblitz/connect-4/releases/download/v.0.2.1-demo/connect-4-demo.gif)
 ## Release
 
 This is a linux binary
