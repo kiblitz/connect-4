@@ -7,6 +7,7 @@ module Column : sig
   val filled_slots : t -> int
   val add_token : t -> player:Player.t -> t
   val nth : t -> n:int -> Player.t option
+  val undo : t -> t Or_error.t
 end = struct
   type t = Player.t Int.Map.t [@@deriving sexp_of]
 
@@ -14,12 +15,19 @@ end = struct
   let filled_slots t = Map.length t
   let add_token t ~player = Map.add_exn t ~key:(filled_slots t) ~data:player
   let nth t ~n = Map.find t n
+
+  let undo t =
+    match filled_slots t with
+    | 0 -> error_s [%message "Undoing move in a column without any tokens"]
+    | n -> Ok (Map.remove t (n - 1))
+  ;;
 end
 
 type t =
   { board : Column.t Int.Map.t
   ; game_state : Game_state.t
   ; played_tokens : int
+  ; history : int list
   ; width : int
   ; height : int
   ; k : int
@@ -43,7 +51,14 @@ let empty ~k ~width ~height =
     |> List.init ~f:(fun column_idx -> column_idx, Column.empty)
     |> Int.Map.of_alist_or_error
   in
-  { board; game_state = To_move Player.starting; played_tokens = 0; width; height; k }
+  { board
+  ; game_state = To_move Player.starting
+  ; played_tokens = 0
+  ; history = []
+  ; width
+  ; height
+  ; k
+  }
 ;;
 
 let get_token t ~column_idx ~row_idx =
@@ -109,8 +124,32 @@ let place_piece t ~column_idx =
   { t with
     board = Map.set t.board ~key:column_idx ~data:new_column
   ; played_tokens = t.played_tokens + 1
+  ; history = column_idx :: t.history
   }
   |> update_game_state ~latest_x:column_idx ~latest_y:row_idx
+;;
+
+let undo t =
+  match t.history with
+  | [] -> error_s [%message "Cannot undo past the start of the game"]
+  | column_idx :: old_history ->
+    let%bind.Or_error new_column = Map.find_or_error t.board column_idx in
+    let%map.Or_error old_column = Column.undo new_column in
+    let old_played_tokens = t.played_tokens - 1 in
+    let old_game_state =
+      let to_move =
+        match old_played_tokens mod 2 = 0 with
+        | true -> Player.starting
+        | false -> Player.other Player.starting
+      in
+      Game_state.To_move to_move
+    in
+    { t with
+      board = Map.set t.board ~key:column_idx ~data:old_column
+    ; played_tokens = old_played_tokens
+    ; history = old_history
+    ; game_state = old_game_state
+    }
 ;;
 
 let to_string_pretty t =
