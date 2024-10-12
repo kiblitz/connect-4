@@ -99,7 +99,7 @@ let main ~k ~width ~height () =
 
 let command =
   Command.async
-    ~summary:"test subcommand"
+    ~summary:"Play a game"
     [%map_open.Command
       let width = Args.width
       and height = Args.height
