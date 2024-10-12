@@ -1,2 +1,6 @@
-(test
- (name test_connect_4))
+(library
+ (name connect_4_test)
+ (inline_tests)
+ (libraries connect_4_lib core)
+ (preprocess
+  (pps ppx_jane)))

@@ -3,12 +3,14 @@ open! Core
 module Column : sig
   type t [@@deriving sexp_of]
 
+  val empty : t
   val filled_slots : t -> int
   val add_token : t -> player:Player.t -> t
   val nth : t -> n:int -> Player.t option
 end = struct
   type t = Player.t Int.Map.t [@@deriving sexp_of]
 
+  let empty = Int.Map.empty
   let filled_slots t = Map.length t
   let add_token t ~player = Map.add_exn t ~key:(filled_slots t) ~data:player
   let nth t ~n = Map.find t n
@@ -45,7 +47,7 @@ type t =
 [@@deriving fields ~getters, sexp_of]
 
 let empty ~width ~height ~k =
-  let%map.Or_error () =
+  let%bind.Or_error () =
     let validate_width = Int.validate_non_negative width in
     let validate_height = Int.validate_non_negative height in
     let validate_k =
@@ -56,13 +58,12 @@ let empty ~width ~height ~k =
     in
     Validate.of_list [ validate_width; validate_height; validate_k ] |> Validate.result
   in
-  { board = Int.Map.empty
-  ; game_state = To_move Player.starting
-  ; played_tokens = 0
-  ; width
-  ; height
-  ; k
-  }
+  let%map.Or_error board =
+    width
+    |> List.init ~f:(fun column_idx -> column_idx, Column.empty)
+    |> Int.Map.of_alist_or_error
+  in
+  { board; game_state = To_move Player.starting; played_tokens = 0; width; height; k }
 ;;
 
 let get_token t ~column_idx ~row_idx =
@@ -92,8 +93,7 @@ let update_game_state t ~latest_x ~latest_y =
         |> List.exists ~f:(fun tokens_in_a_row -> tokens_in_a_row >= t.k)
       in
       let axis_wins =
-        let%map.List dx = [ -1; 1 ]
-        and dy = [ -1; 1 ] in
+        let%map.List dx, dy = [ 1, 0; 0, 1; 1, -1; 1, 1 ] in
         winner_along_axis ~dx ~dy
       in
       List.exists axis_wins ~f:Fn.id
@@ -157,7 +157,7 @@ let to_string_pretty t =
   |> List.map ~f:(String.concat ~sep:"")
   |> (fun board ->
        [ guard_rail ]
-       @ board
+       @ List.rev board
        @ [ guard_rail; ""; Sexp.to_string_hum [%sexp (t.game_state : Game_state.t)] ])
   |> String.concat_lines
 ;;

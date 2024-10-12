@@ -1,3 +1,3 @@
 open! Core
 
-let () = Command_unix.run Connect_4_lib.command
+let () = Command_unix.run Connect_4_lib.Connect_4_command.command
