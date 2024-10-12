@@ -30,7 +30,11 @@ module Args = struct
 end
 
 let name = "play"
-let quit_input = "quit"
+
+module Custom_input = struct
+  let quit = "quit"
+  let undo = "undo"
+end
 
 let response_as_int response =
   match response with
@@ -44,7 +48,7 @@ let try_place_piece board ~column_idx =
     print_string (Board.to_string_pretty board);
     board
   | Error err ->
-    print_s [%message "invalid move" (err : Error.t)];
+    print_s [%message "Invalid move" (err : Error.t)];
     board
 ;;
 
@@ -58,7 +62,18 @@ let main ~k ~width ~height () =
   let rec move board =
     print_s [%message "Please enter a column to place the next piece"];
     match%bind Reader.read_line (force Reader.stdin) with
-    | `Ok response when [%equal: String.t] response quit_input -> return ()
+    | `Ok response when [%equal: String.t] response Custom_input.quit -> return ()
+    | `Ok response when [%equal: String.t] response Custom_input.undo ->
+      let new_board =
+        match Board.undo board with
+        | Ok old_board ->
+          print_string (Board.to_string_pretty old_board);
+          old_board
+        | Error err ->
+          print_s [%message "Error trying to undo" (err : Error.t)];
+          board
+      in
+      move new_board
     | response ->
       let new_board =
         match response_as_int response with
@@ -66,7 +81,9 @@ let main ~k ~width ~height () =
         | None ->
           print_s
             [%message
-              [%string "Expected one of (Number | \"%{quit_input}\")"]
+              [%string
+                "Expected one of (Number | '%{Custom_input.undo}' | \
+                 '%{Custom_input.quit}')"]
                 (response : string Reader.Read_result.t)];
           board
       in
