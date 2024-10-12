@@ -5,22 +5,22 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github kiblitz/connect-4))
 
-(authors "Author Name")
+(authors "glee")
 
-(maintainers "Maintainer Name")
+(maintainers "glee")
 
 (license LICENSE)
 
-(documentation https://url/to/documentation)
+(documentation https://github.com/kiblitz/connect-4)
 
 (package
  (name connect_4)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "Connect 4 with a cli frontend")
+ (description "Connect 4 with a cli frontend")
  (depends ocaml dune)
  (tags
-  (topics "to describe" your project)))
+  (cli game)))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
