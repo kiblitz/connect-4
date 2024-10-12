@@ -1,0 +1,6 @@
+(library
+ (name connect_4_lib)
+ (inline_tests)
+ (libraries core core_unix.command_unix core_kernel.composition_infix)
+ (preprocess
+  (pps ppx_jane)))

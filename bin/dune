@@ -1,0 +1,4 @@
+(executable
+ (public_name connect_4)
+ (name main)
+ (libraries connect_4_lib core core_unix.command_unix))
