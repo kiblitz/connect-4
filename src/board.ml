@@ -48,13 +48,13 @@ type t =
 
 let empty ~width ~height ~k =
   let%bind.Or_error () =
-    let validate_width = Int.validate_non_negative width in
-    let validate_height = Int.validate_non_negative height in
+    let validate_width = Int.validate_positive width in
+    let validate_height = Int.validate_positive height in
     let validate_k =
-      let non_negative = Int.validate_non_negative k in
+      let positive = Int.validate_positive k in
       let at_most_width = Int.validate_ubound k ~max:(Incl width) in
       let at_most_heignt = Int.validate_ubound k ~max:(Incl height) in
-      Validate.of_list [ non_negative; at_most_width; at_most_heignt ]
+      Validate.of_list [ positive; at_most_width; at_most_heignt ]
     in
     Validate.of_list [ validate_width; validate_height; validate_k ] |> Validate.result
   in
