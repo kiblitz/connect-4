@@ -27,7 +27,7 @@ type t =
   { board : Column.t Int.Map.t
   ; game_state : Game_state.t
   ; played_tokens : int
-  ; history : int list
+  ; history : History.t
   ; width : int
   ; height : int
   ; k : int
@@ -54,7 +54,7 @@ let empty ~k ~width ~height =
   { board
   ; game_state = To_move Player.starting
   ; played_tokens = 0
-  ; history = []
+  ; history = History.empty
   ; width
   ; height
   ; k
@@ -121,35 +121,41 @@ let place_piece t ~column_idx =
   in
   let row_idx = Column.filled_slots old_column in
   let new_column = Column.add_token old_column ~player:player_to_move in
+  let new_history = History.place_piece t.history ~column_idx in
   { t with
     board = Map.set t.board ~key:column_idx ~data:new_column
   ; played_tokens = t.played_tokens + 1
-  ; history = column_idx :: t.history
+  ; history = new_history
   }
   |> update_game_state ~latest_x:column_idx ~latest_y:row_idx
 ;;
 
 let undo t =
-  match t.history with
-  | [] -> error_s [%message "Cannot undo past the start of the game"]
-  | column_idx :: old_history ->
-    let%bind.Or_error new_column = Map.find_or_error t.board column_idx in
-    let%map.Or_error old_column = Column.undo new_column in
-    let old_played_tokens = t.played_tokens - 1 in
-    let old_game_state =
-      let to_move =
-        match old_played_tokens mod 2 = 0 with
-        | true -> Player.starting
-        | false -> Player.other Player.starting
-      in
-      Game_state.To_move to_move
+  let%bind.Or_error { History.Update_result.updated_history; column_idx } =
+    History.undo t.history
+  in
+  let%bind.Or_error new_column = Map.find_or_error t.board column_idx in
+  let%map.Or_error old_column = Column.undo new_column in
+  let old_played_tokens = t.played_tokens - 1 in
+  let old_game_state =
+    let to_move =
+      match old_played_tokens mod 2 = 0 with
+      | true -> Player.starting
+      | false -> Player.other Player.starting
     in
-    { t with
-      board = Map.set t.board ~key:column_idx ~data:old_column
-    ; played_tokens = old_played_tokens
-    ; history = old_history
-    ; game_state = old_game_state
-    }
+    Game_state.To_move to_move
+  in
+  { t with
+    board = Map.set t.board ~key:column_idx ~data:old_column
+  ; played_tokens = old_played_tokens
+  ; history = updated_history
+  ; game_state = old_game_state
+  }
+;;
+
+let redo t =
+  let%bind.Or_error column_idx = History.next_move t.history in
+  place_piece t ~column_idx
 ;;
 
 let to_string_pretty t =

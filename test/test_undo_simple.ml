@@ -113,7 +113,7 @@ let%expect_test "simple undo" =
     (To_move Red) |}];
   let t = Board.undo t in
   print_s [%message (t : Board.t Or_error.t)];
-  [%expect {| (t (Error "Cannot undo past the start of the game")) |}];
+  [%expect {| (t (Error "No more history to undo")) |}];
   ()
 ;;
 
@@ -197,6 +197,6 @@ let%expect_test "undo after game end" =
     (To_move Red) |}];
   let t = Board.undo t in
   print_s [%message (t : Board.t Or_error.t)];
-  [%expect{| (t (Error "Cannot undo past the start of the game")) |}];
+  [%expect{| (t (Error "No more history to undo")) |}];
   ()
 ;;
