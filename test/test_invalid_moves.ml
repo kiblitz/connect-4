@@ -2,7 +2,7 @@ open! Core
 open! Import
 
 let%expect_test "row out of bounds" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -27,7 +27,7 @@ let%expect_test "row out of bounds" =
 ;;
 
 let%expect_test "column overflow" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -42,7 +42,8 @@ let%expect_test "column overflow" =
     |}];
   let t = Board.place_piece t ~column_idx:0 |> ok_exn in
   print_string (Board.to_string_pretty t);
-  [%expect {|
+  [%expect
+    {|
     +-+-+-+-+
     | | | | |
     | | | | |
@@ -53,7 +54,8 @@ let%expect_test "column overflow" =
     (To_move Blue) |}];
   let t = Board.place_piece t ~column_idx:0 |> ok_exn in
   print_string (Board.to_string_pretty t);
-  [%expect {|
+  [%expect
+    {|
     +-+-+-+-+
     | | | | |
     | | | | |
@@ -64,7 +66,8 @@ let%expect_test "column overflow" =
     (To_move Red) |}];
   let t = Board.place_piece t ~column_idx:0 |> ok_exn in
   print_string (Board.to_string_pretty t);
-  [%expect {|
+  [%expect
+    {|
     +-+-+-+-+
     | | | | |
     |R| | | |
@@ -75,7 +78,8 @@ let%expect_test "column overflow" =
     (To_move Blue) |}];
   let t = Board.place_piece t ~column_idx:0 |> ok_exn in
   print_string (Board.to_string_pretty t);
-  [%expect {|
+  [%expect
+    {|
     +-+-+-+-+
     |B| | | |
     |R| | | |

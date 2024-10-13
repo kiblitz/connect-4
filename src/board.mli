@@ -2,7 +2,7 @@ open! Core
 
 type t [@@deriving sexp_of]
 
-val empty : k:int -> width:int -> height:int -> t Or_error.t
+val empty : Game_params.t -> t Or_error.t
 val place_piece : t -> column_idx:int -> t Or_error.t
 val undo : t -> t Or_error.t
 val redo : t -> t Or_error.t

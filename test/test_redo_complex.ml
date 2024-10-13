@@ -2,7 +2,7 @@ open! Core
 open! Import
 
 let%expect_test "no history clear when playing moves that align with future" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -101,7 +101,8 @@ let%expect_test "no history clear when playing moves that align with future" =
     (To_move Blue) |}];
   let t = Board.redo t in
   print_s [%message (t : Board.t Or_error.t)];
-  [%expect {|
+  [%expect
+    {|
     (t
      (Ok
       ((board ((0 ()) (1 ((0 Red))) (2 ((0 Blue))) (3 ())))

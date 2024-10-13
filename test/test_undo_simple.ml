@@ -2,7 +2,7 @@ open! Core
 open! Import
 
 let%expect_test "simple undo" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -118,7 +118,7 @@ let%expect_test "simple undo" =
 ;;
 
 let%expect_test "undo after game end" =
-  let t = Board.empty ~width:3 ~height:3 ~k:2 |> ok_exn in
+  let t = Board.empty { Game_params.k = 2; width = 3; height = 3 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -187,7 +187,8 @@ let%expect_test "undo after game end" =
     (To_move Blue) |}];
   let t = Board.undo t |> ok_exn in
   print_string (Board.to_string_pretty t);
-  [%expect{|
+  [%expect
+    {|
     +-+-+-+
     | | | |
     | | | |
@@ -197,6 +198,6 @@ let%expect_test "undo after game end" =
     (To_move Red) |}];
   let t = Board.undo t in
   print_s [%message (t : Board.t Or_error.t)];
-  [%expect{| (t (Error "No more history to undo")) |}];
+  [%expect {| (t (Error "No more history to undo")) |}];
   ()
 ;;

@@ -34,7 +34,7 @@ type t =
   }
 [@@deriving fields ~getters, sexp_of]
 
-let empty ~k ~width ~height =
+let empty { Game_params.k; width; height } =
   let%bind.Or_error () =
     let validate_width = Int.validate_positive width in
     let validate_height = Int.validate_positive height in
@@ -188,7 +188,7 @@ let to_string_pretty t =
 ;;
 
 let%expect_test "empty repr" =
-  let t = empty ~width:7 ~height:6 ~k:4 |> ok_exn in
+  let t = empty { Game_params.k = 4; width = 7; height = 6 } |> ok_exn in
   print_string (to_string_pretty t);
   [%expect
     {|

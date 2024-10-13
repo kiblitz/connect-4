@@ -58,7 +58,7 @@ let handle_game_over board =
   | Game_over (_ : Game_state.Result.t) -> None
 ;;
 
-let main ~k ~width ~height () =
+let main game_params () =
   let rec move board =
     print_s [%message "Please enter a column to place the next piece"];
     match%bind Reader.read_line (force Reader.stdin) with
@@ -92,7 +92,7 @@ let main ~k ~width ~height () =
          move new_board_after_handled_for_game_over
        | None -> return ())
   in
-  let new_game_board = Board.empty ~k ~width ~height |> ok_exn in
+  let new_game_board = Board.empty game_params |> ok_exn in
   print_string (Board.to_string_pretty new_game_board);
   move new_game_board
 ;;
@@ -104,5 +104,5 @@ let command =
       let width = Args.width
       and height = Args.height
       and k = Args.k in
-      main ~k ~width ~height]
+      main { Game_params.k; width; height }]
 ;;

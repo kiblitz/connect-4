@@ -2,7 +2,7 @@ open! Core
 open! Import
 
 let%expect_test "small vertical win" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -83,7 +83,7 @@ let%expect_test "small vertical win" =
 ;;
 
 let%expect_test "small horizontal win" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -164,7 +164,7 @@ let%expect_test "small horizontal win" =
 ;;
 
 let%expect_test "small diag win" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
@@ -269,7 +269,7 @@ let%expect_test "small diag win" =
 ;;
 
 let%expect_test "small neg diag win" =
-  let t = Board.empty ~width:4 ~height:4 ~k:3 |> ok_exn in
+  let t = Board.empty { Game_params.k = 3; width = 4; height = 4 } |> ok_exn in
   print_string (Board.to_string_pretty t);
   [%expect
     {|
