@@ -5,4 +5,4 @@ type t =
   ; width : int
   ; height : int
   }
-[@@deriving sexp]
+[@@deriving fields ~getters, sexp]

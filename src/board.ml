@@ -28,13 +28,11 @@ type t =
   ; game_state : Game_state.t
   ; played_tokens : int
   ; history : History.t
-  ; width : int
-  ; height : int
-  ; k : int
+  ; game_params : Game_params.t
   }
 [@@deriving fields ~getters, sexp_of]
 
-let empty { Game_params.k; width; height } =
+let empty ({ Game_params.k; width; height } as game_params) =
   let%bind.Or_error () =
     let validate_width = Int.validate_positive width in
     let validate_height = Int.validate_positive height in
@@ -55,10 +53,13 @@ let empty { Game_params.k; width; height } =
   ; game_state = To_move Player.starting
   ; played_tokens = 0
   ; history = History.empty
-  ; width
-  ; height
-  ; k
+  ; game_params
   }
+;;
+
+let from_history record =
+  let%map.Or_error empty_board = empty (Record.game_params record) in
+  { empty_board with history = Record.history record }
 ;;
 
 let get_token t ~column_idx ~row_idx =
@@ -73,7 +74,13 @@ let update_game_state t ~latest_x ~latest_y =
     let player_win =
       let winner_along_axis ~dx ~dy =
         let coords =
-          let neg_k_to_k = List.range ~start:`exclusive ~stop:`exclusive (-t.k) t.k in
+          let neg_k_to_k =
+            List.range
+              ~start:`exclusive
+              ~stop:`exclusive
+              (-t.game_params.k)
+              t.game_params.k
+          in
           List.map neg_k_to_k ~f:(fun i -> (dx * i) + latest_x, (dy * i) + latest_y)
         in
         let tokens_along_axis =
@@ -85,7 +92,7 @@ let update_game_state t ~latest_x ~latest_y =
           | Some player :: _ as l when [%equal: Player.t] player latest_player ->
             Some (List.length l)
           | _ -> None)
-        |> List.exists ~f:(fun tokens_in_a_row -> tokens_in_a_row >= t.k)
+        |> List.exists ~f:(fun tokens_in_a_row -> tokens_in_a_row >= t.game_params.k)
       in
       let axis_wins =
         let%map.List dx, dy = [ 1, 0; 0, 1; 1, -1; 1, 1 ] in
@@ -93,7 +100,7 @@ let update_game_state t ~latest_x ~latest_y =
       in
       List.exists axis_wins ~f:Fn.id
     in
-    let no_more_moves = t.played_tokens = t.width * t.height in
+    let no_more_moves = t.played_tokens = t.game_params.width * t.game_params.height in
     let game_state =
       if player_win
       then Game_state.Game_over (Win latest_player)
@@ -108,14 +115,16 @@ let place_piece t ~column_idx =
   let%bind.Or_error player_to_move = Game_state.player_to_move_or_error t.game_state in
   let%bind.Or_error () =
     let validate_column =
-      Int.validate_bound column_idx ~min:(Incl 0) ~max:(Excl t.width)
+      Int.validate_bound column_idx ~min:(Incl 0) ~max:(Excl t.game_params.width)
     in
     Validate.result validate_column
   in
   let%bind.Or_error old_column = Map.find_or_error t.board column_idx in
   let%map.Or_error () =
     let validate_row =
-      Int.validate_ubound (Column.filled_slots old_column) ~max:(Excl t.height)
+      Int.validate_ubound
+        (Column.filled_slots old_column)
+        ~max:(Excl t.game_params.height)
     in
     Validate.result validate_row
   in
@@ -158,6 +167,8 @@ let redo t =
   place_piece t ~column_idx
 ;;
 
+let record t = Record.create ~game_params:t.game_params ~history:t.history
+
 let to_string_pretty t =
   let add_column_separator_to_front s = List.map s ~f:(List.cons "|") in
   let add_column s ~column_idx =
@@ -174,11 +185,11 @@ let to_string_pretty t =
     else add_column s ~column_idx |> process_cols ~column_idx:(column_idx - 1)
   in
   let guard_rail =
-    let length = (t.width * 2) + 1 in
+    let length = (t.game_params.width * 2) + 1 in
     String.init length ~f:(fun idx -> if idx mod 2 = 0 then '+' else '-')
   in
-  List.init t.height ~f:(Fn.const [])
-  |> process_cols ~column_idx:(t.width - 1)
+  List.init t.game_params.height ~f:(Fn.const [])
+  |> process_cols ~column_idx:(t.game_params.width - 1)
   |> List.map ~f:(String.concat ~sep:"")
   |> (fun board ->
        [ guard_rail ]

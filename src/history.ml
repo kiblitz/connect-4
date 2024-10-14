@@ -37,3 +37,10 @@ let next_move t =
   | [] -> error_s [%message "No next move in history"]
   | next_column_idx :: (_ : int list) -> Ok next_column_idx
 ;;
+
+let rec undo_until_start t =
+  match t.past with
+  | [] -> t
+  | last_column_idx :: past ->
+    undo_until_start { past; future = last_column_idx :: t.future }
+;;

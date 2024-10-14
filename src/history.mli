@@ -14,3 +14,4 @@ end
 
 val undo : t -> Update_result.t Or_error.t
 val next_move : t -> int Or_error.t
+val undo_until_start : t -> t
